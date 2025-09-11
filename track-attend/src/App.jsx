@@ -11,8 +11,6 @@ function App() {
       <Route path="/" element={<LoginPage />} />
       <Route path="/student" element={<StudentDashboard />} />
       <Route path="/teacher" element={<TeacherDashboard />} />
-      {/* --- ADDED: New dynamic route for the live session --- */}
-      {/* The :courseName part is a URL parameter that we read in the component */}
       <Route path="/teacher/session/:courseName" element={<LiveSessionPage />} />
     </Routes>
   );

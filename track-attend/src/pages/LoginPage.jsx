@@ -13,7 +13,7 @@ export default function LoginPage() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Normally you'd check login credentials here
+
     if (role === "student") {
       navigate("/student");
     } else {
