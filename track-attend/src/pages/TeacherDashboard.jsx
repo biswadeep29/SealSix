@@ -11,6 +11,8 @@ import {
   Trash2,
   AlertTriangle,
   LineChart,
+  UserPlus,
+  Edit,
 } from "lucide-react";
 
 const MiniCircularProgress = ({ percentage, size = 32 }) => {
@@ -177,6 +179,11 @@ export default function TeacherDashboard() {
   const [selectedClass, setSelectedClass] = useState(null);
   const [isAtRiskModalOpen, setIsAtRiskModalOpen] = useState(false);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
+  const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
+  const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+  const [currentClass, setCurrentClass] = useState(null);
+  const [newStudent, setNewStudent] = useState({ name: "", rollNo: "", email: "" });
+  const [renameValue, setRenameValue] = useState("");
 
   const toggleConstraint = (constraint) => setSelectedConstraints(prev => prev.includes(constraint) ? prev.filter(c => c !== constraint) : [...prev, constraint]);
   const handleGenerateQR = () => { if (selectedClass) navigate(`/teacher/session/${encodeURIComponent(selectedClass)}`); };
@@ -187,8 +194,9 @@ export default function TeacherDashboard() {
     if (newClassName.trim() !== "") {
         const subjectKey = newClassName.trim();
         setClasses(prev => ({ ...prev, [subjectKey]: { totalStudents: 40, sessionHistory: [{ date: new Date().toISOString().split("T")[0], present: 0 }] }}));
-      setNewClassName("");
-      setIsModalOpen(false);
+        setStudentsBySubject(prev => ({ ...prev, [subjectKey]: [] }));
+        setNewClassName("");
+        setIsModalOpen(false);
     }
   };
 
@@ -198,8 +206,50 @@ export default function TeacherDashboard() {
         delete newClasses[subjectKey];
         return newClasses;
     });
+    setStudentsBySubject(prev => {
+        const newStudents = { ...prev };
+        delete newStudents[subjectKey];
+        return newStudents;
+    });
     setOpenMenuKey(null);
   };
+  
+  const handleAddStudentSubmit = (e) => {
+    e.preventDefault();
+    if (!newStudent.name || !newStudent.rollNo) return;
+    setStudentsBySubject(prev => ({
+        ...prev,
+        [currentClass]: [...(prev[currentClass] || []), { ...newStudent, attended: 0, total: 0, rollNo: parseInt(newStudent.rollNo) }]
+    }));
+    setNewStudent({ name: "", rollNo: "", email: "" });
+    setIsAddStudentModalOpen(false);
+    setCurrentClass(null);
+  }
+
+  const handleRenameSubmit = (e) => {
+    e.preventDefault();
+    const newName = renameValue.trim();
+    if (!newName || newName === currentClass) return;
+
+    setClasses(prev => {
+        const newClasses = { ...prev };
+        const data = newClasses[currentClass];
+        delete newClasses[currentClass];
+        newClasses[newName] = data;
+        return newClasses;
+    });
+     setStudentsBySubject(prev => {
+        const newStudents = { ...prev };
+        const data = newStudents[currentClass];
+        delete newStudents[currentClass];
+        newStudents[newName] = data;
+        return newStudents;
+    });
+
+    setRenameValue("");
+    setIsRenameModalOpen(false);
+    setCurrentClass(null);
+  }
 
   const renderOverview = () => {
     const classEntries = Object.entries(classes);
@@ -229,9 +279,15 @@ export default function TeacherDashboard() {
                     <MoreVertical size={20} className="text-gray-500" />
                   </button>
                   {openMenuKey === subject && (
-                    <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-20">
-                      <button onClick={() => handleRemoveClass(subject)} className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                        <Trash2 size={14} /> Remove Class
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20 py-1">
+                      <button onClick={() => { setIsAddStudentModalOpen(true); setCurrentClass(subject); setOpenMenuKey(null); }} className="flex items-center gap-3 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <UserPlus size={16} /> Add Student
+                      </button>
+                      <button onClick={() => { setIsRenameModalOpen(true); setCurrentClass(subject); setRenameValue(subject); setOpenMenuKey(null); }} className="flex items-center gap-3 w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                        <Edit size={16} /> Rename Class
+                      </button>
+                      <button onClick={() => handleRemoveClass(subject)} className="flex items-center gap-3 w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                        <Trash2 size={16} /> Remove Class
                       </button>
                     </div>
                   )}
@@ -300,6 +356,28 @@ export default function TeacherDashboard() {
            </div>
          </div>
        )}
+       {isAddStudentModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <form onSubmit={handleAddStudentSubmit} className="bg-white rounded-xl shadow-lg p-6 w-96">
+            <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-semibold">Add Student to {currentClass}</h2><button type="button" onClick={() => setIsAddStudentModalOpen(false)}><X size={20} className="text-gray-600 hover:text-black" /></button></div>
+            <div className="space-y-4">
+                <input required type="text" value={newStudent.name} onChange={(e) => setNewStudent({...newStudent, name: e.target.value})} placeholder="Student Name" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"/>
+                <input required type="number" value={newStudent.rollNo} onChange={(e) => setNewStudent({...newStudent, rollNo: e.target.value})} placeholder="Roll No" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"/>
+                <input type="email" value={newStudent.email} onChange={(e) => setNewStudent({...newStudent, email: e.target.value})} placeholder="Email (Optional)" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"/>
+            </div>
+            <div className="flex justify-end gap-2 mt-6"><button type="button" onClick={() => setIsAddStudentModalOpen(false)} className="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400">Cancel</button><button type="submit" className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Add Student</button></div>
+          </form>
+        </div>
+       )}
+       {isRenameModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <form onSubmit={handleRenameSubmit} className="bg-white rounded-xl shadow-lg p-6 w-96">
+            <div className="flex justify-between items-center mb-4"><h2 className="text-xl font-semibold">Rename Class</h2><button type="button" onClick={() => setIsRenameModalOpen(false)}><X size={20} className="text-gray-600 hover:text-black" /></button></div>
+            <input required type="text" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} placeholder="Enter new class name" className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-green-500"/>
+            <div className="flex justify-end gap-2"><button type="button" onClick={() => setIsRenameModalOpen(false)} className="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400">Cancel</button><button type="submit" className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Rename</button></div>
+          </form>
+        </div>
+       )}
     </div>
     );
   };
@@ -328,4 +406,3 @@ export default function TeacherDashboard() {
     </div>
   );
 }
-
