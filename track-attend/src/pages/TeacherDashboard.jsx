@@ -363,7 +363,7 @@ export default function TeacherDashboard() {
             <div className="space-y-4">
                 <input required type="text" value={newStudent.name} onChange={(e) => setNewStudent({...newStudent, name: e.target.value})} placeholder="Student Name" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"/>
                 <input required type="number" value={newStudent.rollNo} onChange={(e) => setNewStudent({...newStudent, rollNo: e.target.value})} placeholder="Roll No" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"/>
-                <input type="email" value={newStudent.email} onChange={(e) => setNewStudent({...newStudent, email: e.target.value})} placeholder="Email (Optional)" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"/>
+                <input required type="email" value={newStudent.email} onChange={(e) => setNewStudent({...newStudent, email: e.target.value})} placeholder="Email" className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"/>
             </div>
             <div className="flex justify-end gap-2 mt-6"><button type="button" onClick={() => setIsAddStudentModalOpen(false)} className="px-4 py-2 rounded-lg bg-gray-300 hover:bg-gray-400">Cancel</button><button type="submit" className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Add Student</button></div>
           </form>
