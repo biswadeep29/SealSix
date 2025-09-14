@@ -457,7 +457,7 @@ export default function StudentDashboard() {
 
   const renderOverview = () => (
     <div>
-      <div className="mb-8 text-center">
+      {/* <div className="mb-8 text-center">
         <button
           onClick={() => navigate('/student/verify')}
           className="bg-blue-600 text-white font-bold px-8 py-4 rounded-xl shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105 flex items-center gap-3 mx-auto text-lg"
@@ -465,7 +465,7 @@ export default function StudentDashboard() {
           <QrCode size={24} />
           Scan to Mark Attendance
         </button>
-      </div>
+      </div> */}
 
       <div
         className="bg-white shadow-lg rounded-2xl p-6 mb-6 flex 

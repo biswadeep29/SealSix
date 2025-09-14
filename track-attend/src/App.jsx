@@ -23,7 +23,7 @@ import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import LiveSessionPage from "./pages/LiveSessionPage";
 // --- FIX: Import the new verification page ---
-import StudentVerificationPage from "./pages/StudentVerificationPage";
+//import StudentVerificationPage from "./pages/StudentVerificationPage";
 
 function App() {
   return (
@@ -33,7 +33,7 @@ function App() {
       <Route path="/teacher" element={<TeacherDashboard />} />
       <Route path="/teacher/session/:courseName" element={<LiveSessionPage />} />
       {/* This line will now work because the component is imported */}
-      <Route path="/student/verify" element={<StudentVerificationPage />} />
+      {/* <Route path="/student/verify" element={<StudentVerificationPage />} /> */}
     </Routes>
   );
 }
