@@ -1,40 +1,63 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, QrCode } from "lucide-react";
-import {QRCodeCanvas} from "qrcode.react";
+import { QRCodeCanvas } from "qrcode.react";
+
+const QR_REFRESH_INTERVAL = 30; // seconds
+const MAIN_SESSION_DURATION = 10 * 60 * 1000; // 10 minutes
 
 export default function LiveSessionPage() {
   const { courseName } = useParams();
   const navigate = useNavigate();
 
   const [sessionActive, setSessionActive] = useState(false);
-  const [sessionId, setSessionId] = useState(null);
-  const [expiresAt, setExpiresAt] = useState(null);
+  const [qrData, setQrData] = useState(null);
+  const [countdown, setCountdown] = useState(QR_REFRESH_INTERVAL);
+  const [mainSessionExpiresAt, setMainSessionExpiresAt] = useState(null);
 
-  const SESSION_DURATION = 5 * 60 * 1000; // 5 minutes (demo)
+  const generateNewQrCode = useCallback(() => {
+    const randomToken = Math.random().toString(36).substring(2, 10);
+    const newQrData = JSON.stringify({
+      courseName,
+      sessionId: `${courseName}-${Date.now()}`,
+      token: randomToken,
+    });
+    setQrData(newQrData);
+    setCountdown(QR_REFRESH_INTERVAL);
+  }, [courseName]);
+
 
   const handleStartSession = () => {
-    const newSessionId = `${courseName}-${Date.now()}`; // unique QR content
-    setSessionId(newSessionId);
-    setExpiresAt(Date.now() + SESSION_DURATION);
+    setMainSessionExpiresAt(Date.now() + MAIN_SESSION_DURATION);
+    generateNewQrCode();
     setSessionActive(true);
   };
 
-  // Auto-expire QR
   useEffect(() => {
-    if (!expiresAt) return;
+    if (!sessionActive) return;
 
     const timer = setInterval(() => {
-      if (Date.now() > expiresAt) {
+      // Check for main session expiry
+      if (Date.now() > mainSessionExpiresAt) {
         setSessionActive(false);
-        setSessionId(null);
-        setExpiresAt(null);
-        clearInterval(timer);
+        setQrData(null);
+        setMainSessionExpiresAt(null);
+        return; 
       }
+
+      setCountdown((prevCountdown) => {
+        if (prevCountdown <= 1) {
+          generateNewQrCode();
+          return QR_REFRESH_INTERVAL;
+        }
+        return prevCountdown - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [expiresAt]);
+  }, [sessionActive, mainSessionExpiresAt, generateNewQrCode]);
+
+  const progressPercentage = (countdown / QR_REFRESH_INTERVAL) * 100;
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -51,7 +74,7 @@ export default function LiveSessionPage() {
             Live Attendance Session: {courseName}
           </h1>
           <p className="text-gray-600 mb-8">
-            Generate a unique QR code for students to scan for today's class.
+            A new, secure QR code will be generated periodically.
           </p>
 
           {!sessionActive ? (
@@ -59,7 +82,7 @@ export default function LiveSessionPage() {
               <button
                 onClick={handleStartSession}
                 className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 flex 
-                items-center gap-2 mx-auto text-lg"
+                items-center gap-2 mx-auto text-lg transition-colors"
               >
                 <QrCode /> Generate QR Code
               </button>
@@ -70,13 +93,24 @@ export default function LiveSessionPage() {
                 Ask students to scan the code below:
               </p>
 
-              {sessionId && (
+              {qrData && (
                 <div className="flex flex-col items-center">
-                  <QRCodeCanvas value={sessionId} size={256} />
-                  <p className="mt-4 text-gray-500 text-sm">
-                    Expires at:{" "}
-                    {new Date(expiresAt).toLocaleTimeString()}
-                  </p>
+                  <div className="p-4 bg-white rounded-lg shadow-inner">
+                    <QRCodeCanvas value={qrData} size={256} />
+                  </div>
+                  
+                  <div className="w-full max-w-sm mt-6 text-center">
+                     <p className="text-gray-600 font-semibold">
+                        New QR code in <span className="text-blue-600 text-xl">{countdown}</span> seconds
+                     </p>
+                     <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                        <div 
+                           className="bg-blue-600 h-2.5 rounded-full transition-all duration-1000 ease-linear" 
+                           style={{ width: `${progressPercentage}%` }}>
+                        </div>
+                     </div>
+                  </div>
+
                 </div>
               )}
             </div>
